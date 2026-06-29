@@ -14,12 +14,19 @@ export function ChatWindow() {
   const { messages, isThinking, sendMessage } = useChat()
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom whenever messages update or typing state changes
+  // Auto-scroll to bottom whenever messages update or thinking state changes
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isThinking])
 
   const isEmpty = messages.length === 0
+
+  // Only show the typing indicator when:
+  // - we are waiting for a response (isThinking)
+  // - AND no assistant message slot has been created yet (last msg is the user's)
+  // This prevents the typing indicator appearing alongside a streaming bubble.
+  const lastMessage = messages[messages.length - 1]
+  const showTyping = isThinking && (!lastMessage || lastMessage.role === 'user')
 
   return (
     <>
@@ -43,8 +50,8 @@ export function ChatWindow() {
           ))
         )}
 
-        {/* ── Typing indicator (only when waiting, never alongside a bubble) ── */}
-        {isThinking && (
+        {/* ── Typing indicator — only before the assistant slot is created ── */}
+        {showTyping && (
           <div className="typing-wrap">
             <div className="typing-meta">
               <div className="typing-avatar">AI</div>
@@ -80,3 +87,4 @@ export function ChatWindow() {
     </>
   )
 }
+
