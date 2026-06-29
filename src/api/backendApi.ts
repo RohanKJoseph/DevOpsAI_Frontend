@@ -14,13 +14,20 @@ export interface BackendDecision {
   confidence?: number
 }
 
+export interface LogEntryObject {
+  time?: string
+  action?: string
+  reason?: string
+  status?: string
+}
+
 export interface BackendSystemState {
   cpu_usage_percent?: number | string
   memory_usage_mb?: number | string
   error_rate_percent?: number | string
   request_rate_per_sec?: number | string
-  active_replicas?: number | string
-  recent_history?: string[]
+  active_replicas?: number | string | null
+  recent_history?: (string | LogEntryObject)[]
   [key: string]: unknown
 }
 
@@ -174,12 +181,26 @@ const buildThoughts = (response: BackendWebhookResponse, metrics: MetricSnapshot
   ]
 }
 
-const buildResponseText = (prompt: string, response: BackendWebhookResponse) => {
+const buildResponseText = (_prompt: string, response: BackendWebhookResponse) => {
   const decision = response.decision
-  const action = decision?.action || 'no_action'
-  const reason = decision?.reason?.trim() || response.message || 'Backend processed the request.'
+  const action = decision?.action
+  const reason = decision?.reason?.trim() || response.message || ''
 
-  return `Backend processed "${prompt}" and returned ${action}: ${reason}`
+  // If we have a meaningful reason, use it as the full response
+  if (reason) {
+    // Append the action taken only if it's something meaningful
+    if (action && action !== 'no_action') {
+      return `${reason}\n\n**Recommended action:** \`${action}\``
+    }
+    return reason
+  }
+
+  // Fallback
+  if (action && action !== 'no_action') {
+    return `Recommended action: \`${action}\``
+  }
+
+  return 'I have analysed the cluster state. Everything looks normal.'
 }
 
 export function normalizeBackendResponse(prompt: string, response: BackendWebhookResponse): ChatResponse {

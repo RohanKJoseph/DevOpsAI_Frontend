@@ -1,22 +1,43 @@
 import type { PropsWithChildren } from 'react'
 
-export function MainLayout({ children }: PropsWithChildren) {
+interface MainLayoutProps extends PropsWithChildren {
+  telemetryOpen: boolean
+  onToggleTelemetry: () => void
+}
+
+export function MainLayout({ children, telemetryOpen, onToggleTelemetry }: MainLayoutProps) {
   return (
     <div className="app-shell">
-      <div className="dashboard-frame">
-        <header className="dashboard-topbar">
-          <div className="dashboard-topbar__brand">
-            <div className="dashboard-topbar__mark">S</div>
-            <div>
-              <h1>Sentinel AI</h1>
-              <p>Operate the cluster from a single chat surface</p>
-            </div>
+      {/* ── Top Bar ── */}
+      <header className="topbar">
+        <div className="topbar__brand">
+          <div className="topbar__mark">S</div>
+          <div>
+            <h1 className="topbar__title">Sentinel AI</h1>
+            <p className="topbar__sub">Operate your cluster from a single chat surface</p>
           </div>
-          <div className="status-badge">
-            <span className="status-badge__dot" />
-            Live stream connected
+        </div>
+
+        <div className="topbar__right">
+          <div className="live-badge">
+            <span className="live-badge__dot" />
+            Live
           </div>
-        </header>
+
+          <button
+            type="button"
+            className="telemetry-toggle-btn"
+            data-active={telemetryOpen ? 'true' : 'false'}
+            onClick={onToggleTelemetry}
+            aria-label="Toggle telemetry panel"
+          >
+            📊 Telemetry
+          </button>
+        </div>
+      </header>
+
+      {/* ── Body ── */}
+      <div className="app-body">
         {children}
       </div>
     </div>

@@ -1,5 +1,4 @@
 import ReactMarkdown from 'react-markdown'
-import clsx from 'clsx'
 import type { ChatMessage } from '../../types/chat'
 
 interface MessageBubbleProps {
@@ -9,14 +8,20 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user'
 
+  // Skip rendering empty assistant messages (streaming not started yet)
+  if (!isUser && !message.content) return null
+
   return (
-    <article className={clsx('message-bubble', isUser ? 'message-bubble--user' : 'message-bubble--assistant')}>
-      <div className="message-bubble__role">
+    <article className={`message-bubble message-bubble--${isUser ? 'user' : 'assistant'}`}>
+      {/* ── Meta row ── */}
+      <div className="message-bubble__meta">
         <span className="message-bubble__avatar">{isUser ? 'U' : 'AI'}</span>
-        <span>{isUser ? 'You' : 'Sentinel AI'}</span>
-        <span>{message.createdAt}</span>
+        <span className="message-bubble__sender">{isUser ? 'You' : 'Sentinel AI'}</span>
+        <span className="message-bubble__time">{message.createdAt}</span>
       </div>
-      <div className="message-bubble__content">
+
+      {/* ── Message body ── */}
+      <div className="message-bubble__body">
         <ReactMarkdown
           components={{
             code({ className, children, ...props }) {

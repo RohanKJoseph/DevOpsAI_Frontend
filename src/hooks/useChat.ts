@@ -32,17 +32,6 @@ export function useChat() {
     [activeConversationId, conversations],
   )
 
-  const pushAssistantMessage = (content: string) => {
-    const message: ChatMessage = {
-      id: buildId(),
-      role: 'assistant',
-      content,
-      createdAt: formatTime(),
-    }
-
-    appendMessage(message)
-    return message.id
-  }
 
   const sendMessage = async (content: string) => {
     const trimmed = content.trim()
@@ -60,25 +49,25 @@ export function useChat() {
     appendMessage(userMessage)
     setThinking(true)
 
-    const assistantMessageId = pushAssistantMessage('Connecting to backend...')
-    
     try {
       const { stream, response } = await chatApi(trimmed)
+
+      // Create the assistant message slot once we have a real response
+      const assistantId = buildId()
+      appendMessage({ id: assistantId, role: 'assistant', content: '', createdAt: formatTime() })
 
       const reader = stream.getReader()
       let streamedResponse = ''
 
       while (true) {
         const result = await reader.read()
-        if (result.done) {
-          break
-        }
-
+        if (result.done) break
         streamedResponse += result.value
-        updateMessage(assistantMessageId, streamedResponse)
+        updateMessage(assistantId, streamedResponse)
       }
 
-      updateMessage(assistantMessageId, response.response)
+      // Settle on the final complete response
+      updateMessage(assistantId, response.response)
       setTelemetry(response.telemetry)
       setThoughts(response.thoughts)
       setActions(response.actions)
@@ -90,7 +79,12 @@ export function useChat() {
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      updateMessage(assistantMessageId, `❌ Error: ${errorMessage}`)
+      appendMessage({
+        id: buildId(),
+        role: 'assistant',
+        content: `❌ **Error:** ${errorMessage}`,
+        createdAt: formatTime(),
+      })
       setThinking(false)
     }
   }
