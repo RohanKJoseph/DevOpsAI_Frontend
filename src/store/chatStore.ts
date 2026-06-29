@@ -25,7 +25,7 @@ interface ChatStore {
   addConversation: (conversation: ConversationSummary) => void
 }
 
-const timestamp = () => new Date().toISOString()
+
 
 const initialTelemetry: TelemetryData = {
   status: 'warning',
@@ -67,23 +67,11 @@ const initialTelemetry: TelemetryData = {
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
-  messages: [
-    {
-      id: 'welcome-assistant',
-      role: 'assistant',
-      content:
-        'Ask me about the current cluster health, logs, telemetry, or the next action I should take.',
-      createdAt: timestamp(),
-    },
-  ],
-  thoughts: ['Standing by for a signal'],
+  messages: [],
+  thoughts: [],
   telemetry: initialTelemetry,
   actions: [],
-  conversations: [
-    { id: 'c-1', title: 'CPU Investigation', subtitle: 'High utilization in production' },
-    { id: 'c-2', title: 'Memory Leak', subtitle: 'Heap growth on api service' },
-    { id: 'c-3', title: 'Pod Crash', subtitle: 'Crash loop on rollout' },
-  ],
+  conversations: [],
   activeConversationId: 'c-1',
   isThinking: false,
   setMessages: (messages) => set({ messages }),

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 interface ChatInputProps {
   onSubmit: (message: string) => void | Promise<void>
@@ -6,40 +6,55 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
-  const [value, setValue] = useState('Why is CPU high?')
+  const [value, setValue] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const autoResize = () => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`
+  }
 
   const submit = async () => {
     const trimmed = value.trim()
-    if (!trimmed || disabled) {
-      return
-    }
-
+    if (!trimmed || disabled) return
     setValue('')
+    // Reset height
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
     await onSubmit(trimmed)
   }
 
   return (
     <div className="chat-input">
-      <div className="chat-input__field">
-        <textarea
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault()
-              void submit()
-            }
-          }}
-          placeholder="Describe the issue, ask for telemetry, or request an action..."
-          aria-label="Chat input"
-        />
-        <div className="chat-input__toolbar">
-          <span className="chat-input__hint">Shift + Enter for a new line</span>
-          <button type="button" className="chat-input__send" onClick={() => void submit()} disabled={disabled}>
-            Send
-          </button>
-        </div>
-      </div>
+      <textarea
+        ref={textareaRef}
+        value={value}
+        rows={1}
+        onChange={(e) => {
+          setValue(e.target.value)
+          autoResize()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            void submit()
+          }
+        }}
+        placeholder="Ask Sentinel AI anything about your cluster..."
+        aria-label="Chat input"
+        disabled={disabled}
+      />
+
+      <button
+        type="button"
+        className="chat-input__send"
+        onClick={() => void submit()}
+        disabled={disabled || !value.trim()}
+        aria-label="Send message"
+      >
+        ↑
+      </button>
     </div>
   )
 }
